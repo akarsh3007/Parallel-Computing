@@ -83,7 +83,6 @@ int main (int argc, char* argv[]) {
 
   if (sync == "thread")
   {
-    std::cout << "thread" << "\n";
     for (int i = 0; i < nbthreads; ++i)
     {
       NumIntegrate *nums = new NumIntegrate(function_id,a,temp,n,intensity,th_start,length);

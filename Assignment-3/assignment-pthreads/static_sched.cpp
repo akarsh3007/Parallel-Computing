@@ -48,8 +48,8 @@ struct NumIntegrate
 };
 
 
-void* num_integrate_iterationlevel (void *arg);
-void* num_integrate_threadlevel(void *arg);
+void* num_integrate_static_iterationlevel (void *arg);
+void* num_integrate_static_threadlevel(void *arg);
 
 int main (int argc, char* argv[]) {
 
@@ -57,7 +57,7 @@ int main (int argc, char* argv[]) {
     std::cerr<<"usage: "<<argv[0]<<" <functionid> <a> <b> <n> <intensity> <nbthreads> <sync>"<<std::endl;
     return -1;
   }
-
+  std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
   int function_id = stoi(argv[1]);
   float a = stof(argv[2]);
   float b = stof(argv[3]);
@@ -76,7 +76,7 @@ int main (int argc, char* argv[]) {
     for (int i = 0; i < nbthreads; ++i)
     {
       NumIntegrate *nums = new NumIntegrate(function_id,a,temp,n,intensity,th_start,length);
-      pthread_create(&th[i], NULL, num_integrate_iterationlevel, nums);
+      pthread_create(&th[i], NULL, num_integrate_static_iterationlevel, nums);
       th_start = th_start + length;
     }
   }
@@ -86,7 +86,7 @@ int main (int argc, char* argv[]) {
     for (int i = 0; i < nbthreads; ++i)
     {
       NumIntegrate *nums = new NumIntegrate(function_id,a,temp,n,intensity,th_start,length);
-      pthread_create(&th[i], NULL, num_integrate_threadlevel, nums);
+      pthread_create(&th[i], NULL, num_integrate_static_threadlevel, nums);
       th_start = th_start + length;
     }
   }
@@ -97,11 +97,15 @@ int main (int argc, char* argv[]) {
   }
 
   std::cout << sum << "\n";
+  pthread_mutex_destroy(&sum_lock);
+  std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapsed_seconds = end-start;
+  std::cerr<<elapsed_seconds.count()<<std::endl;
 
   return 0;
 }
 
-  void* num_integrate_iterationlevel (void *arg)
+  void* num_integrate_static_iterationlevel (void *arg)
   {
 
    NumIntegrate* args = (NumIntegrate*) arg;
@@ -138,7 +142,7 @@ int main (int argc, char* argv[]) {
    }
   }
 
-  void* num_integrate_threadlevel (void *arg)
+  void* num_integrate_static_threadlevel (void *arg)
   {
 
    NumIntegrate* args = (NumIntegrate*) arg;

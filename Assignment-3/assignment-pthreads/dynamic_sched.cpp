@@ -26,10 +26,10 @@ float a, b, intensity;
 unsigned long n;
 string sync;
 double multiplier_temp;
-double sum = 0;
 
 pthread_mutex_t sum_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t getnext_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t done_lock = PTHREAD_MUTEX_INITIALIZER;
 
 bool done();
 void getnext(int *start, int *end);
@@ -43,7 +43,7 @@ int main (int argc, char* argv[]) {
     std::cerr<<"usage: "<<argv[0]<<" <functionid> <a> <b> <n> <intensity> <nbthreads> <sync> <granularity>"<<std::endl;
     return -1;
   }
-
+   double sum = 0;
    std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
    function_id = stoi(argv[1]);
    a = stof(argv[2]);
@@ -172,38 +172,37 @@ void* num_integrate_dynamic_chunklevel(void *arg)
     double x = 0.0;
 		getnext(&start, &end);
 		double *sum = (double *) arg;
+    double local_sum = 0.0;
 		for(int i = start; i<= end; i++)
 		{
       x = a + ((float)i + 0.5) * multiplier_temp;
       if (function_id == 1)
        {
-         pthread_mutex_lock (&sum_lock);
-        *sum = *sum + f1(x, intensity)* multiplier_temp;
-         pthread_mutex_unlock (&sum_lock);
+        local_sum = local_sum + f1(x, intensity)* multiplier_temp;
+
        }
        else if (function_id == 2)
        {
-         pthread_mutex_lock (&sum_lock);
-        *sum = *sum + f2(x, intensity)* multiplier_temp;
-         pthread_mutex_unlock (&sum_lock);
+
+        local_sum = local_sum + f2(x, intensity)* multiplier_temp;
+
        }
        else if (function_id == 3)
        {
-         pthread_mutex_lock (&sum_lock);
-        *sum = *sum + f3(x, intensity)* multiplier_temp;
-         pthread_mutex_unlock (&sum_lock);
+        local_sum = local_sum + f3(x, intensity)* multiplier_temp;
        }
        else if (function_id == 4)
        {
-         pthread_mutex_lock (&sum_lock);
-        *sum = *sum + f4(x, intensity)* multiplier_temp;
-         pthread_mutex_unlock (&sum_lock);
+        local_sum = local_sum + f4(x, intensity)* multiplier_temp;
        }
        else
        {
          std::cerr << "Invalid functionid" << "\n";
        }
 		}
+    pthread_mutex_lock (&sum_lock);
+    *sum += local_sum;
+    pthread_mutex_unlock (&sum_lock);
 	}
 }
 
@@ -219,31 +218,29 @@ void* num_integrate_dynamic_threadlevel(void *arg)
     for(int i = start; i<= end; i++)
 		{
       x = a + ((float)i + 0.5) * multiplier_temp;
-			pthread_mutex_lock (&sum_lock);
       if (function_id == 1)
        {
-        *sum = *sum + f1(x, intensity)* multiplier_temp;
+        local_sum = local_sum + f1(x, intensity)* multiplier_temp;
        }
        else if (function_id == 2)
        {
-        *sum = *sum + f2(x, intensity)* multiplier_temp;
+        local_sum = local_sum + f2(x, intensity)* multiplier_temp;
        }
        else if (function_id == 3)
        {
-         *sum = *sum + f3(x,intensity)* multiplier_temp;
+         local_sum = local_sum + f3(x,intensity)* multiplier_temp;
        }
        else if (function_id == 4)
        {
-         *sum = *sum + f4(x, intensity)* multiplier_temp;
+         local_sum = local_sum + f4(x, intensity)* multiplier_temp;
        }
        else
        {
          std::cerr << "Invalid functionid" << "\n";
        }
-			pthread_mutex_unlock (&sum_lock);
 		}
-	pthread_mutex_lock (&sum_lock);
-	*sum += local_sum;
-	pthread_mutex_unlock (&sum_lock);
 }
+  pthread_mutex_lock (&sum_lock);
+  *sum += local_sum;
+  pthread_mutex_unlock (&sum_lock);
 }

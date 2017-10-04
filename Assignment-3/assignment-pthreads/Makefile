@@ -1,10 +1,10 @@
-CFLAGS=-O3 -std=c11
-CXXFLAGS=-O3 -std=c++11 -g
-LDFLAGS=-lpthread
+CFLAGS=-O3 -std=c11 -f -pthread
+CXXFLAGS=-O3 -std=c++11 -g -pthread
+LDFLAGS=-pthread
 ARCHIVES=libfunctions.a
 LD=g++
 
-all: static_sched
+all: sequential static_sched dynamic_sched
 
 static_sched: static_sched.o
 	$(LD) $(LDFLAGS) static_sched.o $(ARCHIVES) -o static_sched

@@ -20,9 +20,12 @@ float f4(float x, int intensity);
 
 using namespace std;
 
+// global sum
 float sum = 0.0 ;
+// initializer mutex
 pthread_mutex_t sum_lock = PTHREAD_MUTEX_INITIALIZER;
 
+// data structure to pass to thread
 struct NumIntegrate
 {
   int function_id ;
@@ -71,25 +74,20 @@ int main (int argc, char* argv[]) {
   pthread_t th[nbthreads];
   int th_start = 0;
 
-  if (sync == "iteration")
-  {
     for (int i = 0; i < nbthreads; ++i)
     {
       NumIntegrate *nums = new NumIntegrate(function_id,a,temp,n,intensity,th_start,length);
-      pthread_create(&th[i], NULL, num_integrate_static_iterationlevel, nums);
-      th_start = th_start + length;
+      if (sync == "iteration")
+      {
+        pthread_create(&th[i], NULL, num_integrate_static_iterationlevel, nums);
+        th_start = th_start + length;
+      }
+      if (sync == "thread")
+      {
+        pthread_create(&th[i], NULL, num_integrate_static_threadlevel, nums);
+        th_start = th_start + length;
+      }
     }
-  }
-
-  if (sync == "thread")
-  {
-    for (int i = 0; i < nbthreads; ++i)
-    {
-      NumIntegrate *nums = new NumIntegrate(function_id,a,temp,n,intensity,th_start,length);
-      pthread_create(&th[i], NULL, num_integrate_static_threadlevel, nums);
-      th_start = th_start + length;
-    }
-  }
 
   for (int i = 0; i < nbthreads; ++i)
   {
@@ -114,30 +112,29 @@ int main (int argc, char* argv[]) {
 
    int end = args->start +  args->length;
 
-   for (i=args->start; i<end; i++) {
-   x = args->a + ((float)i + 0.5) * args->temp;
+   for (i=args->start; i<end; i++)
+   {
+     x = args->a + ((float)i + 0.5) * args->temp;
 
-   pthread_mutex_lock(&sum_lock);
-   if (args->function_id == 1)
-    {
-     sum = sum + f1(x, args->intensity)*args->temp;
-    }
-    else if (args->function_id == 2)
-    {
-      sum = sum + f2(x, args->intensity)*args->temp;
-    }
-    else if (args->function_id == 3)
-    {
-      sum = sum + f3(x, args->intensity)*args->temp;
-    }
-    else if (args->function_id == 4)
-    {
-      sum = sum + f4(x, args->intensity)*args->temp;
-    }
-    else
-    {
-      std::cerr << "Invalid functionid" << "\n";
-    }
+     pthread_mutex_lock(&sum_lock);
+     switch (args->function_id)
+     {
+       case 1:
+          sum = sum + f1(x, args->intensity)*args->temp;
+         break;
+       case 2:
+          sum = sum + f2(x, args->intensity)*args->temp;
+        break;
+      case 3:
+          sum = sum + f3(x, args->intensity)*args->temp;
+        break;
+      case 4:
+          sum = sum + f4(x, args->intensity)*args->temp;
+        break;
+       default:
+           std::cerr << "Invalid functionid" << "\n";
+         break;
+     }
     pthread_mutex_unlock(&sum_lock);
    }
   }
@@ -151,30 +148,28 @@ int main (int argc, char* argv[]) {
    float local_sum = 0.0;
    int end = args->start +  args->length;
 
-   for (i=args->start; i<end; i++) {
-   x = args->a + ((float)i + 0.5) * args->temp;
+   for (i=args->start; i<end; i++)
+   {
+     x = args->a + ((float)i + 0.5) * args->temp;
 
-
-   if (args->function_id == 1)
-    {
-     local_sum = local_sum + f1(x, args->intensity)*args->temp;
-    }
-    else if (args->function_id == 2)
-    {
-      local_sum = local_sum + f2(x, args->intensity)*args->temp;
-    }
-    else if (args->function_id == 3)
-    {
-      local_sum = local_sum + f3(x, args->intensity)*args->temp;
-    }
-    else if (args->function_id == 4)
-    {
-      local_sum = local_sum + f4(x, args->intensity)*args->temp;
-    }
-    else
-    {
-      std::cerr << "Invalid functionid" << "\n";
-    }
+     switch (args->function_id)
+     {
+         case 1:
+            local_sum = local_sum + f1(x, args->intensity)*args->temp;
+           break;
+         case 2:
+            local_sum = local_sum + f2(x, args->intensity)*args->temp;
+          break;
+        case 3:
+            local_sum = local_sum + f3(x, args->intensity)*args->temp;
+          break;
+        case 4:
+            local_sum = local_sum + f4(x, args->intensity)*args->temp;
+          break;
+         default:
+             std::cerr << "Invalid functionid" << "\n";
+           break;
+      }
    }
 
    pthread_mutex_lock(&sum_lock);

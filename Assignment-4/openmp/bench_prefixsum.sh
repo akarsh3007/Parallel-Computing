@@ -30,14 +30,14 @@ do
 	./prefixsum $n $t  >/dev/null 2> ${RESULTDIR}/prefixsum_${n}_${t}
     done
 done
-	     
+
 for n in $N;
 do
     for t in $THREADS;
     do
 	#output in format "thread seq par"
 	echo ${t} \
-	     $(cat ${RESULTDIR}/prefixsum_${n} \
+	     $(cat ${RESULTDIR}/prefixsum_${n}) \
 	     $(cat ${RESULTDIR}/prefixsum_${n}_${t})
     done   > ${RESULTDIR}/speedup_prefixsum_${n}
 done
@@ -51,7 +51,7 @@ set style data linespoints
 
 
 set key top left;
-set xlabel 'threads'; 
+set xlabel 'threads';
 set ylabel 'speedup';
 set xrange [1:20];
 set yrange [0:20];

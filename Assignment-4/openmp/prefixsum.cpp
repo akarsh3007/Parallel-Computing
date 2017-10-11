@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-
+#include <chrono>
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,8 +13,8 @@ extern "C" {
 
   void generatePrefixSumData (int* arr, size_t n);
   void checkPrefixSumResult (int* arr, size_t n);
-  
-  
+
+
 #ifdef __cplusplus
 }
 #endif
@@ -34,7 +34,7 @@ int main (int argc, char* argv[]) {
       std::cerr<<"something is amiss"<<std::endl;
     }
   }
-  
+
   if (argc < 3) {
     std::cerr<<"Usage: "<<argv[0]<<" <n> <nbthreads>"<<std::endl;
     return -1;
@@ -43,7 +43,9 @@ int main (int argc, char* argv[]) {
   int * arr = new int [atoi(argv[1])];
 
   generatePrefixSumData (arr, atoi(argv[1]));
-  
+
+  std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+
   int n = stoi(argv[1]);
   int num_proc = stoi(argv[2]);
   int policy_n = 10;
@@ -51,16 +53,11 @@ int main (int argc, char* argv[]) {
 	int* pr =new int[n+1];
   omp_set_num_threads(num_proc);
 
-  for(int i=0;i<n;i++){
-    cout<<arr[i]<<" ";
-  }
-  cout<<endl;
-
   #pragma omp for schedule(dynamic, policy_n)
   for (int i = 1;i < n; i++)
   {
     arr[i] += arr[i-1];
-  }                
+  }
 
   for (int i = policy_n; i < n; i=i+policy_n)
   {
@@ -77,14 +74,13 @@ int main (int argc, char* argv[]) {
     pr[i+1] = arr[i];
   }
 
-  for(int i=0;i<=n;i++){
-    cout<<pr[i]<<" ";
-  }
-  cout<<endl;
+  std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
 
+  std::chrono::duration<double> elapsed_seconds = end-start;
+  std::cerr<<elapsed_seconds.count()<<std::endl;
 
   checkPrefixSumResult(pr, atoi(argv[1]));
-  
+
   delete[] arr;
   delete[] pr;
 

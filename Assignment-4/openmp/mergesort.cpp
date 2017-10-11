@@ -49,23 +49,10 @@ int main (int argc, char* argv[]) {
   int * arr = new int [size];
   int *temp = new int [size];
   int nbthreads = atoi(argv[2]);
-  std::cout << "size: " << size << "\n";
-  std::cout << "thread_count: "<< nbthreads << "\n";
 
-  for (int i = 0; i < size; ++i)
-  {
-     std::cout << "i: "<<i << " value: " <<arr[i] <<"\n" ;
-  }
-  std::cout << "loop completed" << "\n";
-  generateMergeSortData (arr, atoi(argv[1]));
-  for (int i = 0; i < size; ++i)
-  {
-     std::cout << "i: "<<i << " value: " <<arr[i] <<"\n" ;
-  }
-  std::cout << "loop completed" << "\n";
-  std::cout << "array generated" << "\n";
+  generateMergeSortData (arr, size);
 
-  //std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+  std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
   omp_set_num_threads(nbthreads);
 
   #pragma omp parallel
@@ -74,11 +61,11 @@ int main (int argc, char* argv[]) {
         mergesort(arr, atoi(argv[1]), temp);
     }
 
-  checkMergeSortResult (arr, atoi(argv[1]));
-  //std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+  checkMergeSortResult (arr, size);
+  std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
 
-  //std::chrono::duration<double> elapsed_seconds = end-start;
-  //std::cerr<<elapsed_seconds.count()<<std::endl;
+  std::chrono::duration<double> elapsed_seconds = end-start;
+  std::cerr<<elapsed_seconds.count()<<std::endl;
 
   delete[] arr;
 
@@ -86,7 +73,6 @@ int main (int argc, char* argv[]) {
 }
 void merge(int *arr, int n, int *temp)
 {
-    std::cout << "inside merge" << "\n";
     int i = 0, j = n/2, k = 0;
     while (i<n/2 && j<n)
     {
@@ -113,7 +99,6 @@ void merge(int *arr, int n, int *temp)
 }
 void mergesort(int *arr, int n, int *temp)
 {
-  std::cout << "inside mergesort" << "\n";
   if (n < 2)
   return;
 

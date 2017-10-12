@@ -38,7 +38,7 @@ test_reduce: reduce
 
 assignment-openmp-loop.tgz: approx.cpp \
           assignment-openmp-loop.pdf \
-          bench_reduce.sh bench_mergesort.sh bench_prefixsum.sh \
+          bench_reduce.sh bench_mergesort.sh bench_prefixsum.sh bench_numint.sh \
           test_reduce.sh \
 	  Makefile libgen.a libfunctions.a libintegrate.a \
           reduce.cpp prefixsum.cpp mergesort.cpp numint.cpp \
@@ -46,7 +46,7 @@ assignment-openmp-loop.tgz: approx.cpp \
 	tar zcvf assignment-openmp-loop.tgz \
           approx.cpp \
           assignment-openmp-loop.pdf \
-          bench_reduce.sh bench_mergesort.sh bench_prefixsum.sh \
+          bench_reduce.sh bench_mergesort.sh bench_prefixsum.sh bench_numint.sh \
           test_reduce.sh \
 	  Makefile libgen.a libfunctions.a libintegrate.a \
           reduce.cpp prefixsum.cpp mergesort.cpp numint.cpp \

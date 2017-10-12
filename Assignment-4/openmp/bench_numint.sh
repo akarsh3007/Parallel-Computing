@@ -15,59 +15,43 @@ then
 fi
 
 
-N="100 1000000000"
-THREADS="1 2 4 8 16"
+NS="1000 100000000"
+THREADS="1 2 4 8 12 16"
 GRANS="1 1000"
 INTENSITIES="10 1000"
 
 make numint numint_seq
 
-for n in $N;
+for n in $NS;
 do
-    for gran in ${GRANS};
+    for gran in ${GRANS}
     do
-        for intensity in $INTENSITIES;
-        do
-            ./numint_seq 1 0 10 ${n} ${intensity} >/dev/null 2> ${RESULTDIR}/numint_${n}_${intensity}
-            for t in $THREADS;
-            do
-            ./numint 1 0 10 ${n} ${intensity} ${t} dynamic ${gran}  >/dev/null 2> ${RESULTDIR}/numint_${n}_${intensity}_${t}_${gran}
-            done
-        done
+	for inten in ${INTENSITIES}
+	do
+	    
+	    ./numint_seq 1 1 10 ${n} ${inten}  >/dev/null 2> ${RESULTDIR}/numint_${n}
+	    
+	    for t in $THREADS;
+	    do
+		./numint 1 1 10 ${n} ${inten} $t dynamic ${gran} >/dev/null 2> ${RESULTDIR}/numint_${n}_${t}_${gran}_${inten}
+	    done
+	done
     done
 done
-
-
-for intensity in $INTENSITIES;
+	     
+for n in $NS;
 do
-    for gran in ${GRANS};
+    for gran in ${GRANS}
     do
-        for n in $N;
-        do
-            for thread in ${THREADS};
-            do
-                #output in format "gran seqtime partime"
-                echo ${t} \
-                $(cat ${RESULTDIR}/numint_${n}_${intensity}) \
-                $(cat ${RESULTDIR}/numint_${n}_${intensity}_${t}_${gran})
-            done > ${RESULTDIR}/speedup_numint_${n}_${intensity}_${gran}
-            done
-        done
-    done
-done
-
-for intensity in $INTENSITIES;
-do
-    for n in $NSPLOT;
-    do
-	    GCMDSPN="${GCMDSPN} ; set key top left; \
-                                  set xlabel 'threads'; \
-                                  set ylabel 'speedup'; \
-                                  set xrange [*:*]; \
-                                  set yrange [*:20]; \
-                                  set title 'intensity=${intensity} granularity=${gran}'; \
-                plot '${RESULTDIR}/speedup_numint_${n}_${intensity}_1' u 1:(\$2/\$3) t '1' lc 4, \
-                     '${RESULTDIR}/speedup_numint_${n}_${intensity}_1000' u 1:(\$2/\$3) lc 3 t '1000'; "
+	for inten in ${INTENSITIES}
+	do
+	    for t in $THREADS;
+	    do
+		#output in format "thread seq par"
+		echo ${t} \
+		     $(cat ${RESULTDIR}/numint_${n}) \
+		     $(cat ${RESULTDIR}/numint_${n}_${t}_${gran}_${inten})
+	    done   > ${RESULTDIR}/speedup_numint_${n}_${gran}_${inten}
 	done
     done
 done
@@ -79,6 +63,23 @@ set output 'numint_plots.pdf'
 
 set style data linespoints
 
-${GCMDSPN}
+
+set key top left;
+set xlabel 'threads'; 
+set ylabel 'speedup';
+set xrange [1:20];
+set yrange [0:20];
+set title 'n=1000' ;
+plot '${RESULTDIR}/speedup_numint_1000_1_10' u 1:(\$2/\$3) t 'gran=1 inten=10' lc 1, \
+     '${RESULTDIR}/speedup_numint_1000_1_1000' u 1:(\$2/\$3) t 'gran=1 inten=1000' lc 3, \
+     '${RESULTDIR}/speedup_numint_1000_1000_10' u 1:(\$2/\$3) t 'gran=1000 inten=10' lc 4, \
+     '${RESULTDIR}/speedup_numint_1000_1000_1000' u 1:(\$2/\$3) t 'gran=1000 inten=1000' lc 5
+
+set title 'n=100000000' ;
+plot '${RESULTDIR}/speedup_numint_100000000_1_10' u 1:(\$2/\$3) t 'gran=1 inten=10' lc 1, \
+     '${RESULTDIR}/speedup_numint_100000000_1_1000' u 1:(\$2/\$3) t 'gran=1 inten=1000' lc 3, \
+     '${RESULTDIR}/speedup_numint_100000000_1000_10' u 1:(\$2/\$3) t 'gran=1000 inten=10' lc 4, \
+     '${RESULTDIR}/speedup_numint_100000000_1000_1000' u 1:(\$2/\$3) t 'gran=1000 inten=1000' lc 5
+
 
 EOF

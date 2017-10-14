@@ -25,7 +25,7 @@ extern "C" {
 using namespace std;
 int compare(int a0, int a1);
 void merge(int *arr, int l, int m, int r);
-void mergesort(int *arr,int n, string schedule_type, int granularity);
+void mergesort(int *arr,int n);
 
 int main (int argc, char* argv[]) {
 
@@ -50,13 +50,11 @@ int main (int argc, char* argv[]) {
   int * arr = new int [size];
   int *temp = new int [size];
   int nbthreads = atoi(argv[2]);
-  string schedule_type = argv[3];
-  int granularity = atoi(argv[4]);
   generateMergeSortData (arr, size);
 
   std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
   omp_set_num_threads(nbthreads);
-  mergesort(arr,size, schedule_type,granularity);
+  mergesort(arr,size);
   checkMergeSortResult (arr, size);
   std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
 
@@ -120,24 +118,10 @@ void merge(int *arr, int l, int m, int r)
 	return;
 
 }
-void mergesort(int *arr,int n, string schedule_type, int granularity)
+void mergesort(int *arr,int n)
 {
   for (int len=1; len<=n-1; len = 2*len)
 	{
-    if (schedule_type == "dynamic")
-    {
-      if (granularity >= 1)
-      {
-        #pragma omp parallel for schedule(dynamic, granularity)
-        for (int ls=0; ls<n-1; ls += 2*len)
-        {
-          int mid = compare(ls+len-1, n-1);
-          int right = compare(ls+(2*len)-1, n-1);
-          merge(arr, ls, mid, right);
-        }
-      }
-      else
-      {
         #pragma omp parallel for schedule(dynamic)
         for (int ls=0; ls<n-1; ls += 2*len)
         {
@@ -145,33 +129,6 @@ void mergesort(int *arr,int n, string schedule_type, int granularity)
           int right = compare(ls+(2*len)-1, n-1);
           merge(arr, ls, mid, right);
         }
-      }
-
     }
-    else if (schedule_type == "static")
-    {
-      if(granularity >= 1)
-      {
-        #pragma omp parallel for schedule(dynamic, granularity)
-        for (int ls=0; ls<n-1; ls += 2*len)
-        {
-          int mid = compare(ls+len-1, n-1);
-          int right = compare(ls+(2*len)-1, n-1);
-          merge(arr, ls, mid, right);
-        }
-      }
-      else
-      {
-        #pragma omp parallel for schedule(dynamic)
-        for (int ls=0; ls<n-1; ls += 2*len)
-        {
-          int mid = compare(ls+len-1, n-1);
-          int right = compare(ls+(2*len)-1, n-1);
-          merge(arr, ls, mid, right);
-        }
-      }
-
-    }
-	}
 	return;
 }

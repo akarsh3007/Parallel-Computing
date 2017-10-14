@@ -37,7 +37,7 @@ do
     do
 	#output in format "thread seq par"
 	echo ${t} \
-	     $(cat ${RESULTDIR}/prefixsum_${n} \
+	     $(cat ${RESULTDIR}/prefixsum_${n}) \
 	     $(cat ${RESULTDIR}/prefixsum_${n}_${t})
     done   > ${RESULTDIR}/speedup_prefixsum_${n}
 done

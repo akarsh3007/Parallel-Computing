@@ -9,7 +9,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <chrono>
-
+#include <string>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -23,8 +23,9 @@ extern "C" {
 #endif
 
 using namespace std;
-void merge(int *arr, int n, int *temp);
-void mergesort(int *arr, int n, int *temp);
+int compare(int a0, int a1);
+void merge(int *arr, int l, int m, int r);
+void mergesort(int *arr,int n, string schedule_type, int granularity);
 
 int main (int argc, char* argv[]) {
 
@@ -45,22 +46,17 @@ int main (int argc, char* argv[]) {
     return -1;
   }
 
-  int size = atoi(argv[1]);
+  long size = atoi(argv[1]);
   int * arr = new int [size];
   int *temp = new int [size];
   int nbthreads = atoi(argv[2]);
-
+  string schedule_type = argv[3];
+  int granularity = atoi(argv[4]);
   generateMergeSortData (arr, size);
 
   std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
   omp_set_num_threads(nbthreads);
-
-  #pragma omp parallel
-    {
-        #pragma omp single
-        mergesort(arr, atoi(argv[1]), temp);
-    }
-
+  mergesort(arr,size, schedule_type,granularity);
   checkMergeSortResult (arr, size);
   std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
 
@@ -71,45 +67,111 @@ int main (int argc, char* argv[]) {
 
   return 0;
 }
-void merge(int *arr, int n, int *temp)
+int compare(int a0, int a1)
 {
-    int i = 0, j = n/2, k = 0;
-    while (i<n/2 && j<n)
-    {
-        if (arr[i] < arr[j])
-        {
-           temp[k++] = arr[i++];
-        }
-        else
-        {
-           temp[k++] = arr[j++];
-        }
-    }
-    while (i<n/2)
-    {
-        temp[k++] = arr[i++];
-    }
-
-    while (j<n)
-    {
-        temp[k++] = arr[j++];
-    }
-    memcpy(arr, temp, n*sizeof(int));
-    return;
+	return a0 < a1 ? a0 : a1;
 }
-void mergesort(int *arr, int n, int *temp)
+
+void merge(int *arr, int l, int m, int r)
 {
-  if (n < 2)
-  return;
+  int n1 = m - l + 1, n2 = r - m;
 
-   #pragma omp task
-   mergesort(arr, n/2, temp);
-   #pragma omp taskwait
+	// Creating left and right arrays
+	int L[n1], R[n2];
+	for (int i = 0; i < n1; i++)
+	{
+		L[i] = arr[l + i]; // from l to l+n1-1
+	}
+	for (int j = 0; j < n2; j++)
+	{
+		R[j] = arr[m + 1+ j]; // from m+1 to m+n2
+	}
 
-   #pragma omp task
-   mergesort(arr+(n/2), n-(n/2), temp);
 
-   #pragma omp taskwait
+	int i = 0, j = 0, k = l;
 
-   merge(arr, n, temp);
+	// Merging 2 arrays of length n1 & n2
+	while (i < n1 && j < n2)
+	{
+		if (L[i] <= R[j])
+		{
+			arr[k++] = L[i++];
+		}
+		else
+		{
+			arr[k++] = R[j++];
+		}
+	}
+
+	if(j == n2) // in case R finishes first, leftover elements of L will get inserted as it is
+	{
+		while (i < n1)
+		{
+			arr[k++] = L[i++];
+		}
+	}
+	else if(i == n1) // in case L finishes first, leftover elements of R will get inserted as it is
+	{
+		while (j < n2)
+		{
+			arr[k++] = R[j++];
+		}
+	}
+	return;
+
+}
+void mergesort(int *arr,int n, string schedule_type, int granularity)
+{
+  for (int len=1; len<=n-1; len = 2*len)
+	{
+    if (schedule_type == "dynamic")
+    {
+      if (granularity >= 1)
+      {
+        #pragma omp parallel for schedule(dynamic, granularity)
+        for (int ls=0; ls<n-1; ls += 2*len)
+        {
+          int mid = compare(ls+len-1, n-1);
+          int right = compare(ls+(2*len)-1, n-1);
+          merge(arr, ls, mid, right);
+        }
+      }
+      else
+      {
+        #pragma omp parallel for schedule(dynamic)
+        for (int ls=0; ls<n-1; ls += 2*len)
+        {
+          int mid = compare(ls+len-1, n-1);
+          int right = compare(ls+(2*len)-1, n-1);
+          merge(arr, ls, mid, right);
+        }
+      }
+
+    }
+    else if (schedule_type == "static")
+    {
+      if(granularity >= 1)
+      {
+        #pragma omp parallel for schedule(dynamic, granularity)
+        for (int ls=0; ls<n-1; ls += 2*len)
+        {
+          int mid = compare(ls+len-1, n-1);
+          int right = compare(ls+(2*len)-1, n-1);
+          merge(arr, ls, mid, right);
+        }
+      }
+      else
+      {
+        #pragma omp parallel for schedule(dynamic)
+        for (int ls=0; ls<n-1; ls += 2*len)
+        {
+          int mid = compare(ls+len-1, n-1);
+          int right = compare(ls+(2*len)-1, n-1);
+          merge(arr, ls, mid, right);
+        }
+      }
+
+    }
+	}
+	return;
 }

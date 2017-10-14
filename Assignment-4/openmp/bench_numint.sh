@@ -24,16 +24,15 @@ make numint numint_seq
 
 for n in $NS;
 do
-    for gran in ${GRANS}
+    for inten in ${INTENSITIES}
     do
-	for inten in ${INTENSITIES}
+	./numint_seq 1 1 10 ${n} ${inten}  >/dev/null 2> ${RESULTDIR}/numint_${n}_${inten}
+	
+	for gran in ${GRANS}
 	do
-	    
-	    ./numint_seq 1 1 10 ${n} ${inten}  >/dev/null 2> ${RESULTDIR}/numint_${n}
-	    
-	    for t in $THREADS;
+	    for t in ${THREADS};
 	    do
-		./numint 1 1 10 ${n} ${inten} $t dynamic ${gran} >/dev/null 2> ${RESULTDIR}/numint_${n}_${t}_${gran}_${inten}
+		./numint 1 1 10 ${n} ${inten} ${t} dynamic ${gran} >/dev/null 2> ${RESULTDIR}/numint_${n}_${t}_${gran}_${inten}
 	    done
 	done
     done
@@ -41,15 +40,15 @@ done
 	     
 for n in $NS;
 do
-    for gran in ${GRANS}
+    for inten in ${INTENSITIES}
     do
-	for inten in ${INTENSITIES}
+	for gran in ${GRANS}
 	do
-	    for t in $THREADS;
+	    for t in ${THREADS};
 	    do
 		#output in format "thread seq par"
 		echo ${t} \
-		     $(cat ${RESULTDIR}/numint_${n}) \
+		     $(cat ${RESULTDIR}/numint_${n}_${inten}) \
 		     $(cat ${RESULTDIR}/numint_${n}_${t}_${gran}_${inten})
 	    done   > ${RESULTDIR}/speedup_numint_${n}_${gran}_${inten}
 	done
